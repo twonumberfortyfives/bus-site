@@ -9,4 +9,4 @@ class Bus(models.Model):
         verbose_name_plural = "buses"
 
     def __str__(self):
-        return f"Bus: {self.info} (id = ({self.id}))"
+        return f"Bus: {self.info} (id = ({self.id})) Seats: {self.num_seats}"
