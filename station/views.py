@@ -6,8 +6,10 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework import generics, mixins, viewsets
 
-from station.models import Bus
-from station.serializers import BusSerializer
+from station.models import Bus, Trip, Ticket, Facility
+from station.serializers import BusSerializer, TripSerializer, TicketSerializer, TripListSerializer, FacilitySerializer, \
+    BusListSerializer, BusRetrieveSerializer
+
 
 # USING MANUAL VIEW FUNC TO MANIPULATE REQUESTS
 # ___________________________________________________________________
@@ -151,4 +153,41 @@ class BusViewSet(
     viewsets.ModelViewSet,
 ):
     queryset = Bus.objects.all()
-    serializer_class = BusSerializer
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return BusListSerializer
+        if self.action == "retrieve":
+            return BusRetrieveSerializer
+        return BusSerializer
+
+    def get_queryset(self):
+        queryset = self.queryset
+        if self.action == ("list", "retrieve"):
+            return queryset.prefetch_related("facilities")
+        return queryset
+
+
+class TripViewSet(viewsets.ModelViewSet):
+    queryset = Trip.objects.all()
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return TripListSerializer
+        return TripSerializer
+
+    def get_queryset(self):
+        queryset = self.queryset
+        if self.action == ("list", "retrieve"):
+            return queryset.select_related()
+        return queryset
+
+
+class TicketViewSet(viewsets.ModelViewSet):
+    queryset = Ticket.objects.all()
+    serializer_class = TicketSerializer
+
+
+class FacilityViewSet(viewsets.ModelViewSet):
+    queryset = Facility.objects.all()
+    serializer_class = FacilitySerializer
