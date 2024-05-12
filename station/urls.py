@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework import routers
 
-from station.views import BusViewSet, TripViewSet, TicketViewSet, FacilityViewSet
+from station.views import BusViewSet, TripViewSet, TicketViewSet, FacilityViewSet, OrderViewSet
 
 # simplifying urls
 
@@ -10,6 +10,7 @@ router.register("buses", BusViewSet)
 router.register("trips", TripViewSet)
 router.register("tickets", TicketViewSet)
 router.register("facilities", FacilityViewSet)
+router.register("orders", OrderViewSet)
 
 # urlpatterns = router.urls
 # _____________________________________________________________________________________________________________________

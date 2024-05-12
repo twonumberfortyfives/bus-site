@@ -6,9 +6,9 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework import generics, mixins, viewsets
 
-from station.models import Bus, Trip, Ticket, Facility
+from station.models import Bus, Trip, Ticket, Facility, Order
 from station.serializers import BusSerializer, TripSerializer, TicketSerializer, TripListSerializer, FacilitySerializer, \
-    BusListSerializer, BusRetrieveSerializer
+    BusListSerializer, BusRetrieveSerializer, TripRetrieveSerializer, OrderSerializer
 
 
 # USING MANUAL VIEW FUNC TO MANIPULATE REQUESTS
@@ -174,6 +174,8 @@ class TripViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action == "list":
             return TripListSerializer
+        if self.action == "retrieve":
+            return TripRetrieveSerializer
         return TripSerializer
 
     def get_queryset(self):
@@ -191,3 +193,14 @@ class TicketViewSet(viewsets.ModelViewSet):
 class FacilityViewSet(viewsets.ModelViewSet):
     queryset = Facility.objects.all()
     serializer_class = FacilitySerializer
+
+
+class OrderViewSet(viewsets.ModelViewSet):
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
+
+    def get_queryset(self):
+        return self.queryset.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)

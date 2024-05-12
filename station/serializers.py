@@ -1,5 +1,6 @@
+from django.db import transaction
 from rest_framework import serializers
-from station.models import Bus, Trip, Ticket, Facility
+from station.models import Bus, Trip, Ticket, Facility, Order
 
 
 # class BusSerializer(serializers.Serializer):
@@ -39,7 +40,7 @@ class BusListSerializer(BusSerializer):
     facilities = serializers.SlugRelatedField(
         many=True,
         read_only=True,
-        slug_field="name"
+        slug_field="name",
     )
 
 
@@ -53,11 +54,36 @@ class TripSerializer(serializers.ModelSerializer):
         fields = ("id", "source", "destination", "departure", "bus")
 
 
-class TripListSerializer(TripSerializer):
-    bus = BusSerializer(read_only=True)
+class TripListSerializer(TripSerializer, serializers.ModelSerializer):
+    bus_info = serializers.CharField(source="bus.info", read_only=True)
+    bus_num_seats = serializers.IntegerField(source="bus.num_seats", read_only=True)
+
+    class Meta:
+        model = Trip
+        fields = ("id", "source", "destination", "departure", "bus", "bus_info", "bus_num_seats")
+
+
+class TripRetrieveSerializer(TripSerializer):
+    bus = BusSerializer()
 
 
 class TicketSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ticket
-        fields = ("id", "seat", "trip", "order")
+        fields = ("id", "seat", "trip")
+
+
+class OrderSerializer(serializers.ModelSerializer):
+    tickets = TicketSerializer(many=True, read_only=False, allow_empty=False)
+
+    class Meta:
+        model = Order
+        fields = ("id", "created_at", "tickets")
+
+    def create(self, validated_data):
+        with transaction.atomic():
+            tickets_data = validated_data.pop("tickets")
+            order = Order.objects.create(**validated_data)
+            for ticket_data in tickets_data:
+                Ticket.objects.create(order=order, **ticket_data)
+            return order
