@@ -1,5 +1,7 @@
 from django.db import transaction
 from rest_framework import serializers
+from rest_framework.validators import UniqueTogetherValidator
+
 from station.models import Bus, Trip, Ticket, Facility, Order
 
 
@@ -30,7 +32,6 @@ class FacilitySerializer(serializers.ModelSerializer):
 
 
 class BusSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Bus
         fields = ("id", "info", "num_seats", "is_small", "facilities")
@@ -63,14 +64,23 @@ class TripListSerializer(TripSerializer, serializers.ModelSerializer):
         fields = ("id", "source", "destination", "departure", "bus", "bus_info", "bus_num_seats")
 
 
-class TripRetrieveSerializer(TripSerializer):
-    bus = BusSerializer()
-
-
 class TicketSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ticket
         fields = ("id", "seat", "trip")
+
+    def validate(self, attrs):
+        # if not (1 <= attrs["seat"] <= attrs["trip"].bus.num_seats):
+        #     raise serializers.ValidationError(
+        #         {
+        #             "seat": f"seat must be in range [1, {attrs["bus.num_seats"]}, not {attrs["seat"]}]"
+        #         }
+        #     )
+        Ticket.validate_seat(attrs["seat"], attrs["trip"].bus.num_seats, serializers.ValidationError)
+
+
+class TripRetrieveSerializer(TripSerializer):
+    bus = BusSerializer()
 
 
 class OrderSerializer(serializers.ModelSerializer):

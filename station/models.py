@@ -52,18 +52,29 @@ class Ticket(models.Model):
     order = models.ForeignKey("Order", on_delete=models.CASCADE, related_name="tickets")
 
     class Meta:
-        constraints = [
-            UniqueConstraint(fields=["seat", "trip"], name="unique_ticket_seat_trip")  # вариации полей который должны быть уникальны
-        ]
+        # constraints = [
+        #     UniqueConstraint(fields=["seat", "trip"], name="unique_ticket_seat_trip")  # вариации полей который должны быть уникальны
+        # ]
+        unique_together = ("seat", "trip")
 
     def __str__(self):
         return f"{self.seat} - (seat: {self.seat})"
 
+    @staticmethod
+    def validate_seat(seat: int, num_seats: int, error_to_raise):
+        if not (1 <= seat <= num_seats):
+            raise error_to_raise(
+                {
+                    "seat": f"Seat must be in range [1, {num_seats}], not {seat}"
+                }
+            )
+
     def clean(self):  # валидирует поля перед отправления данных в базу. В данном случае поля поля на билетах и в автобусе
-        if not (1 <= self.seat <= self.trip.bus.num_seats):
-            raise ValueError({
-                "seat": f"seat must be in range [1, {self.trip.bus.num_seats}, not {self.seat}]"
-            })
+        # if not (1 <= self.seat <= self.trip.bus.num_seats):
+        #     raise ValueError({
+        #         "seat": f"seat must be in range [1, {self.trip.bus.num_seats}, not {self.seat}]"
+        #     })
+        Ticket.validate_seat(self.seat, self.trip.bus.num_seats, ValueError)
 
     def save(
             self,
