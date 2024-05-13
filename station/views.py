@@ -154,6 +154,11 @@ class BusViewSet(
 ):
     queryset = Bus.objects.all()
 
+    @staticmethod
+    def _params_to_ints(query_string):
+        """Converts a string of format '1,2,3' to a list of [1,2,3]"""
+        return [int(str_id) for str_id in query_string.split(",")]
+
     def get_serializer_class(self):
         if self.action == "list":
             return BusListSerializer
@@ -163,9 +168,16 @@ class BusViewSet(
 
     def get_queryset(self):
         queryset = self.queryset
+
+        facilities = self.request.query_params.get('facilities')
+
+        if facilities:
+            facilities = self._params_to_ints(facilities)
+            queryset = queryset.filter(facilities__id__in=facilities)
+
         if self.action == ("list", "retrieve"):
             return queryset.prefetch_related("facilities")
-        return queryset
+        return queryset.distinct()
 
 
 class TripViewSet(viewsets.ModelViewSet):

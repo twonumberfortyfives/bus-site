@@ -46,7 +46,7 @@ class BusListSerializer(BusSerializer):
 
 
 class BusRetrieveSerializer(BusSerializer):
-    facilities = FacilitySerializer(many=True, read_only=True)
+    facilities = FacilitySerializer(many=True)
 
 
 class TripSerializer(serializers.ModelSerializer):
@@ -70,17 +70,33 @@ class TicketSerializer(serializers.ModelSerializer):
         fields = ("id", "seat", "trip")
 
     def validate(self, attrs):
-        # if not (1 <= attrs["seat"] <= attrs["trip"].bus.num_seats):
-        #     raise serializers.ValidationError(
-        #         {
-        #             "seat": f"seat must be in range [1, {attrs["bus.num_seats"]}, not {attrs["seat"]}]"
-        #         }
-        #     )
-        Ticket.validate_seat(attrs["seat"], attrs["trip"].bus.num_seats, serializers.ValidationError)
+        Ticket.validate_seat(
+            attrs["seat"],
+            attrs["trip"].bus.num_seats,
+            serializers.ValidationError
+        )
+        return attrs
 
 
 class TripRetrieveSerializer(TripSerializer):
-    bus = BusSerializer()
+    bus = BusRetrieveSerializer(many=False, read_only=True)
+    taken_seats = serializers.SlugRelatedField(
+        many=True,
+        read_only=True,
+        slug_field="seat",
+        source="tickets"
+    )  # Changed field name to tickets
+
+    class Meta:
+        model = Trip
+        fields = (
+            "id",
+            "source",
+            "destination",
+            "departure",
+            "bus",
+            "taken_seats"
+        )
 
 
 class OrderSerializer(serializers.ModelSerializer):

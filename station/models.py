@@ -56,6 +56,7 @@ class Ticket(models.Model):
         #     UniqueConstraint(fields=["seat", "trip"], name="unique_ticket_seat_trip")  # вариации полей который должны быть уникальны
         # ]
         unique_together = ("seat", "trip")
+        ordering = ["seat"]
 
     def __str__(self):
         return f"{self.seat} - (seat: {self.seat})"
