@@ -34,7 +34,13 @@ class FacilitySerializer(serializers.ModelSerializer):
 class BusSerializer(serializers.ModelSerializer):
     class Meta:
         model = Bus
-        fields = ("id", "info", "num_seats", "is_small", "facilities")
+        fields = ("id", "info", "num_seats", "is_small", "facilities", "image")
+
+
+class BusImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Bus
+        fields = ("id", "image")
 
 
 class BusListSerializer(BusSerializer):
@@ -58,10 +64,20 @@ class TripSerializer(serializers.ModelSerializer):
 class TripListSerializer(TripSerializer, serializers.ModelSerializer):
     bus_info = serializers.CharField(source="bus.info", read_only=True)
     bus_num_seats = serializers.IntegerField(source="bus.num_seats", read_only=True)
+    tickets_available = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Trip
-        fields = ("id", "source", "destination", "departure", "bus", "bus_info", "bus_num_seats")
+        fields = (
+            "id",
+            "source",
+            "destination",
+            "departure",
+            "bus",
+            "bus_info",
+            "bus_num_seats",
+            "tickets_available",
+        )
 
 
 class TicketSerializer(serializers.ModelSerializer):
@@ -113,3 +129,11 @@ class OrderSerializer(serializers.ModelSerializer):
             for ticket_data in tickets_data:
                 Ticket.objects.create(order=order, **ticket_data)
             return order
+
+
+class TicketListSerializer(TicketSerializer):
+    trip = TripListSerializer(read_only=True, many=False)
+
+
+class OrderListSerializer(OrderSerializer):
+    tickets = TicketListSerializer(read_only=True, many=True)
